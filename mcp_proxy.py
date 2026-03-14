@@ -7,8 +7,10 @@ Usage:
 """
 
 import sys
+import multiprocessing
 
 if __name__ == "__main__":
+    multiprocessing.freeze_support()
     if len(sys.argv) > 1 and sys.argv[1] == "--cli-runner":
         sys.argv.pop(1)
         from mcp_proxy.cli_runner import main
