@@ -16,7 +16,15 @@ from .agents import Agent, AgentStore
 logger = logging.getLogger("mcp-schema-proxy")
 
 # ── Resolve script path for client configs ────────────────────────────────────
-CLI_RUNNER = str(Path(__file__).resolve().parent / "cli_runner.py")
+def _resolve_cli_runner() -> str:
+    """Resolve cli_runner.py path for both dev and PyInstaller frozen modes."""
+    if getattr(sys, 'frozen', False):
+        # PyInstaller: cli_runner.py is bundled as a data file next to the exe
+        return str(Path(sys.executable).parent / "cli_runner.py")
+    else:
+        return str(Path(__file__).resolve().parent / "cli_runner.py")
+
+CLI_RUNNER = _resolve_cli_runner()
 
 # ── Color Palette ─────────────────────────────────────────────────────────────
 C_BG = "#1e1e2e"
