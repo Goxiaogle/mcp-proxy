@@ -49,7 +49,7 @@ class Agent:
                 cfg["env"] = self.upstream_env
             return cfg
 
-    def client_mcp_config(self, script_path: str) -> dict:
+    def client_mcp_config(self, base_cmd: list[str]) -> dict:
         """Generate the MCP config JSON that AI clients should use."""
         if self.proxy_mode == "sse":
             return {
@@ -57,12 +57,12 @@ class Agent:
                 "url": f"http://{self.proxy_host}:{self.proxy_port}/sse",
             }
         else:
-            # Stdio mode: client launches proxy via python
+            # Stdio mode: client launches proxy via the correct dev/frozen cmd
             upstream_json = json.dumps(self.upstream_config(), ensure_ascii=False)
             return {
                 "type": "stdio",
-                "command": "python",
-                "args": [script_path, upstream_json],
+                "command": base_cmd[0],
+                "args": base_cmd[1:] + [upstream_json],
             }
 
 

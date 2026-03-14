@@ -16,15 +16,13 @@ from .agents import Agent, AgentStore
 logger = logging.getLogger("mcp-schema-proxy")
 
 # ── Resolve script path for client configs ────────────────────────────────────
-def _resolve_cli_runner() -> str:
-    """Resolve cli_runner.py path for both dev and PyInstaller frozen modes."""
+def _get_runner_cmd() -> list[str]:
+    """Get the base command to launch the CLI runner based on execution mode."""
     if getattr(sys, 'frozen', False):
-        # PyInstaller: cli_runner.py is bundled as a data file next to the exe
-        return str(Path(sys.executable).parent / "cli_runner.py")
+        return [sys.executable, "--cli-runner"]
     else:
-        return str(Path(__file__).resolve().parent / "cli_runner.py")
-
-CLI_RUNNER = _resolve_cli_runner()
+        main_script = str(Path(__file__).resolve().parent.parent / "mcp_proxy.py")
+        return [sys.executable, main_script, "--cli-runner"]
 
 # ── Color Palette ─────────────────────────────────────────────────────────────
 C_BG = "#1e1e2e"
@@ -677,7 +675,7 @@ class McpProxyGUI(tk.Tk):
         agent = self._selected_agent()
         if not agent:
             return
-        config = agent.client_mcp_config(CLI_RUNNER)
+        config = agent.client_mcp_config(_get_runner_cmd())
         text = json.dumps(config, indent=2, ensure_ascii=False)
         self.clipboard_clear()
         self.clipboard_append(text)
@@ -692,7 +690,7 @@ class McpProxyGUI(tk.Tk):
             return
         lines = []
         for agent in agents:
-            cfg_json = json.dumps(agent.client_mcp_config(CLI_RUNNER), indent=2, ensure_ascii=False)
+            cfg_json = json.dumps(agent.client_mcp_config(_get_runner_cmd()), indent=2, ensure_ascii=False)
             # Indent the config body by 2 spaces so it reads nicely
             indented = cfg_json.replace("\n", "\n  ")
             lines.append(f'"{agent.name}": {indented}')
@@ -754,7 +752,7 @@ class McpProxyGUI(tk.Tk):
     def _start_agent(self, agent: Agent):
         """Start a proxy agent as a subprocess."""
         upstream_json = json.dumps(agent.upstream_config(), ensure_ascii=False)
-        cmd = [sys.executable, CLI_RUNNER, upstream_json]
+        cmd = _get_runner_cmd() + [upstream_json]
 
         if agent.proxy_mode == "sse":
             cmd += ["--sse", "--port", str(agent.proxy_port),

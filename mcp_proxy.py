@@ -6,7 +6,13 @@ Usage:
   python mcp_proxy.py
 """
 
-from mcp_proxy.gui import run_gui
+import sys
 
 if __name__ == "__main__":
-    run_gui()
+    if len(sys.argv) > 1 and sys.argv[1] == "--cli-runner":
+        sys.argv.pop(1)
+        from mcp_proxy.cli_runner import main
+        sys.exit(main())
+    else:
+        from mcp_proxy.gui import run_gui
+        run_gui()

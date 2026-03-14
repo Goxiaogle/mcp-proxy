@@ -1,6 +1,6 @@
 @echo off
 REM ── Build MCP Schema Proxy Windows EXE ──
-REM Produces: dist\mcp-proxy\mcp-proxy.exe (one-dir build)
+REM Produces: dist\mcp-proxy.exe (one-file build)
 
 cd /d "%~dp0"
 
@@ -9,9 +9,9 @@ echo === Building MCP Schema Proxy ===
 .venv\Scripts\pyinstaller.exe ^
     --name "mcp-proxy" ^
     --windowed ^
+    --onefile ^
     --noconfirm ^
     --clean ^
-    --add-data "mcp_proxy\cli_runner.py;." ^
     --hidden-import mcp ^
     --hidden-import mcp.types ^
     --hidden-import mcp.server ^
@@ -43,4 +43,4 @@ if %ERRORLEVEL% neq 0 (
 )
 
 echo === Build complete ===
-echo Output: dist\mcp-proxy\mcp-proxy.exe
+echo Output: dist\mcp-proxy.exe
