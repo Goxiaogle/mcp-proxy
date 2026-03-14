@@ -704,6 +704,15 @@ class McpProxyGUI(tk.Tk):
         agent = self._selected_agent()
         if not agent:
             return
+        if agent.proxy_mode == "stdio":
+            messagebox.showinfo(
+                "无需启动", 
+                f"代理「{agent.name}」使用的是 Stdio 模式。\n\n"
+                "Stdio 模式的代理只能由 AI 客户端（如 JetBrains IDE）直接唤起通信，"
+                "无需、也不能在后台独立运行。\n\n"
+                "请直接点击“复制配置”并将配置内容粘贴到客户端软件内即可。"
+            )
+            return
         if agent.id in self._processes:
             messagebox.showinfo("提示", f"代理「{agent.name}」已在运行中")
             return
@@ -727,14 +736,20 @@ class McpProxyGUI(tk.Tk):
             messagebox.showinfo("提示", "没有代理可启动")
             return
         started = 0
+        skipped_stdio = 0
         for agent in agents:
+            if agent.proxy_mode == "stdio":
+                skipped_stdio += 1
+                continue
             if agent.id not in self._processes:
                 self._start_agent(agent)
                 started += 1
         if started:
-            self._set_status(f"已启动 {started} 个代理")
+            self._set_status(f"已启动 {started} 个 SSE 代理")
+        elif skipped_stdio == len(agents):
+            self._set_status("列表中的所有代理均为 Stdio 模式，由客户端自动拉起，无需启动")
         else:
-            self._set_status("所有代理已在运行中")
+            self._set_status("所有支持后台运行的代理已在运行中")
 
     def _on_stop_all(self):
         """Stop all running agents."""
@@ -763,6 +778,7 @@ class McpProxyGUI(tk.Tk):
                 cmd,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
+                stdin=subprocess.PIPE,  # Pass stdin pipe so it doesn't instantly EOF
                 creationflags=subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0,
             )
             self._processes[agent.id] = proc
